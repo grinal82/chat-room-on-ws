@@ -13,10 +13,10 @@ app.use(cors());
 app.use(bodyParser());
 // app.use(router());
 
-app.use(async (ctx, next) => {
-    console.log(ctx.headers);
-    await next();
-});
+// app.use(async (ctx, next) => {
+//     console.log(ctx.headers);
+//     await next();
+// });
 
 
 
@@ -36,6 +36,7 @@ wsServer.on("connection", (ws) => {
     clients[id] = ws
     console.log(`New client with ${id} connected`)
     console.log(clients)
+    ws.send(JSON.stringify({ chat }));
     ws.on("message", (rawMessage) => {
         console.log(`message from frontend: ${rawMessage}`)
         const { message } =JSON.parse(rawMessage)
