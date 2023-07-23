@@ -1,18 +1,16 @@
 const chatSpace = document.getElementById("chat");
+const sendMessageBtn = document.getElementById("send");
 
 const ws = new WebSocket("ws://localhost:7070");
 
-const sendMessageBtn = document.getElementById("send");
-
+// отправка содержимого формы на сервер
 sendMessageBtn.addEventListener("click", function (event) {
     event.preventDefault();
     chatMessage = document.getElementById("chat-message");
     message = chatMessage.value;
-    // console.log(message)
     if (!message) {
         return;
     }
-
     ws.send(
         JSON.stringify({
             message: message,
@@ -21,33 +19,32 @@ sendMessageBtn.addEventListener("click", function (event) {
     chatMessage.value = "";
 });
 
+// Listeners на различные события websocket'a
 ws.addEventListener("open", (e) => {
-    // console.log(e);
-
+    console.log(e);
     console.log("ws open");
 });
 
 ws.addEventListener("close", (e) => {
-    // console.log(e);
-
+    console.log(e);
     console.log("ws close");
 });
 
 ws.addEventListener("error", (e) => {
-    // console.log(e);
-
+    console.log(e);
     console.log("ws error");
 });
 
+// Обработка полученных сообщенийы
 ws.onmessage = (incomingMessage) => {
     console.log(incomingMessage);
     try {
         const data = JSON.parse(incomingMessage.data);
-        const messages = Array.isArray(data) ? data : []; // Check if data is an array
+        const messages = Array.isArray(data) ? data : []; // проверка является ли data массивом
         let created = new Date().toLocaleDateString();
         let time = new Date().toLocaleTimeString();
         messages.forEach((val) => {
-            const { message } = val; // Extract the 'message' property
+            const { message } = val; // Получаем'message'
             chatSpace.innerHTML += `
                 <li class="clearfix">
                     <div class="message-data text-right">
