@@ -13,38 +13,84 @@ app.use(bodyParser());
 const port = process.env.PORT || 7070;
 const server = http.createServer(app.callback());
 const wsServer = new WS.Server({
-    server,
+  server,
 });
 
 const clients = {};
 const chat = [];
+const usernames = new Set();
 
 wsServer.on("connection", (ws) => {
-    const id = uuidv4();
-    clients[id] = ws;
-    console.log(`New client with ${id} connected`);
-    console.log(clients);
-    const chatHistory = JSON.stringify({ chat });
-    ws.send(chatHistory);
+  const chatHistory = JSON.stringify({ type: "chat", chat });
+  const activeUsernames = Array.from(usernames);
+  ws.send(
+    JSON.stringify({
+      type: "initialData",
+      chatHistory,
+      activeUsernames,
+    })
+  );
 
-    ws.on("message", (rawMessage) => {
-        console.log(`message from frontend: ${rawMessage}`);
-        const { message } = JSON.parse(rawMessage);
-        chat.push({ message });
-        // console.log(eventData)
-        Array.from(wsServer.clients)
-            .filter((client) => client.readyState === WS.OPEN)
-            .forEach((client) => client.send(JSON.stringify([{ message }])));
-    });
+  ws.on("message", (rawMessage) => {
+    const { type, username, message, created, time } = JSON.parse(rawMessage);
+    if (type === "username") {
+      // Validate the username
+      if (usernames.has(username)) {
+        // Username already exists, send a validation response
+        ws.send(
+          JSON.stringify({
+            type: "usernameValidation",
+            isValid: false,
+            message: "Username already taken",
+          })
+        );
+      } else {
+        // Username is valid, store it in the WebSocket client object and add to the usernames list
+        ws.username = username;
+        usernames.add(username);
+        ws.send(
+          JSON.stringify({
+            type: "usernameValidation",
+            isValid: true,
+            username,
+          })
+        );
+      }
+    } else if (type === "message") {
+      // Handle regular chat messages
+      chat.push({ username: ws.username, message, created, time });
+      // Broadcast the message to all connected clients
+      Array.from(wsServer.clients)
+        .filter((client) => client.readyState === WS.OPEN)
+        .forEach((client) =>
+          client.send(
+            JSON.stringify({
+              type: "message",
+              username: ws.username,
+              message,
+              created,
+              time,
+            })
+          )
+        );
+    }
+  });
 
-    // Send the chat history to the newly connected client
+  ws.on("close", () => {
+    delete clients[id];
+    if (ws.username) {
+      // Remove the username from the list when the WebSocket is closed
+      usernames.delete(ws.username);
+    }
+    console.log(`client with ${ws.username} closed`);
+  });
 });
 
 server.listen(port, (err) => {
-    if (err) {
-        console.log(err);
-        return;
-    }
+  if (err) {
+    console.log(err);
+    return;
+  }
 
-    console.log("Server is listening to port: " + port);
+  console.log("Server is listening to port: " + port);
 });
