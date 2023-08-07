@@ -84,7 +84,19 @@ ws.onmessage = (incomingMessage) => {
       if (isValid) {
         ws.username = username;
         hidePopup();
-        // addNewUserToPeopleList(username);
+        userListHTML += `
+        <li class="clearfix">
+          <div class="about">
+            <div class="name">${ws.username}</div>
+            <div class="status"> <i class="fa fa-circle online"></i> online </div>
+          </div>
+        </li>
+      `;
+        peopleList.innerHTML = `
+        <ul class="list-unstyled chat-list mt-2 mb-0">
+          ${userListHTML}
+        </ul>
+      `;
       } else {
         popupError.textContent = message;
       }
@@ -92,6 +104,7 @@ ws.onmessage = (incomingMessage) => {
       // Обработчик истории чата
       const { chatHistory, activeUsernames } = data;
       chatSpace.innerHTML = ""; // Clear the chat space to avoid duplication
+      peopleList.innerHTML = "";
       activeUsers = activeUsernames; // Update the activeUsers array
 
       // Include the current user's username in the userListHTML
@@ -136,7 +149,9 @@ ws.onmessage = (incomingMessage) => {
           <div class="${
             isCurrentUser ? "message-data text-right" : "message-data text-left"
           }">
-            <span class="message-data-time">${val.username},${time}, ${created}</span>
+            <span class="message-data-time">${
+              val.username
+            },${time}, ${created}</span>
           </div>
           <div class="message ${
             isCurrentUser
@@ -151,7 +166,9 @@ ws.onmessage = (incomingMessage) => {
       const isCurrentUser = username === ws.username;
       chatSpace.innerHTML += `
         <li class="clearfix">
-          <div class="message-data text-right">
+          <div class="${
+            isCurrentUser ? "message-data text-right" : "message-data text-left"
+          }">
             <span class="message-data-time">${username}, ${time}, ${created}</span>
             <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar">
           </div>

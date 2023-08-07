@@ -57,9 +57,9 @@ wsServer.on("connection", (ws) => {
         );
       }
     } else if (type === "message") {
-      // Handle regular chat messages
+      // Пушим сообщение в массив для хранения
       chat.push({ username: ws.username, message, created, time });
-      // Broadcast the message to all connected clients
+      // Передаем сообщение всем подключенным клиентам
       Array.from(wsServer.clients)
         .filter((client) => client.readyState === WS.OPEN)
         .forEach((client) =>
@@ -79,7 +79,7 @@ wsServer.on("connection", (ws) => {
   ws.on("close", () => {
     delete clients[id];
     if (ws.username) {
-      // Remove the username from the list when the WebSocket is closed
+      // Удаляем юзернеймы при отключении
       usernames.delete(ws.username);
     }
     console.log(`client with ${ws.username} closed`);
